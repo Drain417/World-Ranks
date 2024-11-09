@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <div id="background-image"></div>
-    <img src="/Logo.svg"  alt="Logo" />
+    <img src="/public/Logo.svg"  alt="Logo" />
     <div class="container">
       <router-view></router-view>
     </div>

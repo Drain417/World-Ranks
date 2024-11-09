@@ -10,5 +10,10 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
-  }
+  },
+  build: {
+    emptyOutDir: true,
+    outDir:'dist',
+  },
+  base: process.env.NODE_ENV === 'production' ? '/World-Ranks-Page/' : '/',
 })

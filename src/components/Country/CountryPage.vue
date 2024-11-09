@@ -1,46 +1,46 @@
 <script setup>
-import { computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
+import { useRoute } from 'vue-router';
 
 const route = useRoute();
-const router = useRouter();
 const store = useStore();
 
-const country = computed(() => {
-  const countryCode = route.params.id;
-  if (!countryCode) return null;
-
-  const foundCountry = store.state.countries.find(c => c.cca3 === countryCode) || {
+const foundCountry = ref({
     languages: [],
     currencyName: '',
     continents: [],
     borders: [],
     name: { common: '', official: '' },
     logged: false,
-  }
+    flags: '',
+  });
 
-  if (foundCountry && !foundCountry.logged) {
+watch(() => route.params.id, (newId) => {
+  const country = foundCountry.value;
+  if (country && !country.logged && country.cca3 === newId) {
     console.log('Found country:', foundCountry);
-    foundCountry.logged = true;
+    country.logged = true;
   }
-
-  foundCountry.languages = Object.values(foundCountry.languages);
-  console.log('Found country:', foundCountry);
-  return foundCountry;
 });
 
 onMounted(() => {
-  const foundCountry = country.value;
-  if (foundCountry && !foundCountry.logged) {
-    console.log('Logging country:', foundCountry);
-    foundCountry.logged = true;
+  const countryCode = route.params.id;
+  if (!countryCode) return;
+
+  const country = store.state.countries.find(c => c.cca3 === countryCode);
+
+  if (country) {
+    foundCountry.value = { ...country };
+    if (!foundCountry.value.logged) {
+      console.log('Found country:', foundCountry.value);
+      foundCountry.value.logged = true;
+    }
+    foundCountry.value.languages = Object.values(foundCountry.value.languages);
   }
 });
 
-const goBack = () => {
-  router.push({ name: 'Home' });
-};
+const country = computed(() => foundCountry.value);
 
 const formatNumber = (num) => {
   return new Intl.NumberFormat().format(num);
@@ -49,7 +49,7 @@ const formatNumber = (num) => {
 
 <template>
   <div class="container">
-  <div class="country-page" @click.stop>
+  <div class="country-page" @click.stop v-if="country">
    <img :src="country.flags" alt="Flag" class="flag" />
    <div class="country-name">
      <h2>{{ country.name.common }}</h2>
@@ -70,11 +70,11 @@ const formatNumber = (num) => {
   <div class="details">
     <div class="detail">
       <span class="key">Capital</span>
-      <span class="value">{{ country.capital[0] }}</span>
+      <span class="value">{{ country.capital && country.capital.length ? country.capital[0] : 'N/A' }}</span>
     </div>
     <div class="detail">
       <span class="key">Subregion</span>
-      <span class="value">{{ country.subregion }}</span>
+      <span class="value">{{ country.subregion || 'N/A' }}</span>
     </div>
     <div class="detail">
       <span class="key">Language</span>
@@ -82,11 +82,11 @@ const formatNumber = (num) => {
     </div>
     <div class="detail">
       <span class="key">Currency</span>
-      <span class="value">{{ country.currencyName }}</span>
+      <span class="value">{{ country.currencyName || 'N/A' }}</span>
     </div>
     <div class="detail">
       <span class="key">Continents</span>
-      <span class="value">{{ country.continents.join(', ') }}</span>
+      <span class="value">{{ country.continents.length ? country.continents.join(', ') : 'N/A' }}</span>
     </div>
   </div>
   <div class="neighbours">
@@ -96,6 +96,9 @@ const formatNumber = (num) => {
     </ul>
     <p v-else>No neighbouring countries.</p>
   </div>
+  </div>
+  <div v-else>
+    <p>Loading...</p>
   </div>
   </div>
 </template>
